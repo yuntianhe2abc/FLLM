@@ -7,194 +7,6 @@ import numpy as np
 import pickle
 
 
-class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings):
-        self.encodings = encodings
-
-    def __getitem__(self, idx):
-        return {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-
-    def __len__(self):
-        return len(self.encodings["input_ids"])
-
-
-def get_parameters(model):
-    """
-    Get the parameters of a model.
-    Args:
-        model: A neural network model with parameters.
-
-    Returns:
-        A deep copy list of parameters of the model.
-    """
-    return [val.clone().detach().cpu().numpy() for _, val in model.state_dict().items()]
-
-
-def initialise_client_parameters(server_parameters, num_of_clients):
-    """
-    Initialise the parameters of the clients.
-    Args:
-        server_parameters: The parameters of the server model.
-        num_of_clients: The number of clients.
-
-    Returns:
-        A list of parameters for the clients.
-    """
-    client_parameters = []
-    for i in range(num_of_clients):
-        client_parameters.append([np.copy(p) for p in server_parameters])
-    return client_parameters
-
-
-def set_parameters(model, parameters):
-    """
-    Set the parameters of a model.
-    Args:
-        model: A neural network models with parameters.
-        parameters: A list of parameters for the model.
-
-    Returns:
-        The model with the new parameters.
-    """
-    params_dict = zip(model.state_dict().keys(), parameters)
-    state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
-    model.load_state_dict(state_dict, strict=True)
-    return model
-
-
-def train_epoch(model, train_loader, device):
-    """
-    Train a client model on local data for a complete epoch.
-    Args:
-        model: The model to be trained
-        train_loader: The training data loader
-        device: The device to run the model on
-
-    Returns:
-        The average training loss
-    """
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
-    model.train()
-    train_loop = tqdm(train_loader, leave=False)
-    epoch_train_loss = 0
-    for batch in train_loop:
-        optimizer.zero_grad()
-        input_ids = batch["input_ids"].to(device)
-        attention_mask = batch["attention_mask"].to(device)
-        labels = batch["labels"].to(device)
-        train_outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-        train_loss = train_outputs.loss
-        train_loss.backward()
-        optimizer.step()
-        epoch_train_loss += train_loss.item()
-        train_loop.set_description(f"Training loss: {train_loss.item()}")
-    average_epoch_loss = epoch_train_loss / len(train_loop)
-    print(f"Epoch average training loss: {average_epoch_loss}")
-    return average_epoch_loss
-
-
-def train_batch(model, batch, device):
-    """
-    Train a client model on local data for a single batch.
-    Args:
-        model: The model to be trained
-        batch: The training batch
-        device: The device to run the model on
-
-    Returns:
-        The batch training loss and the attention scores
-    """
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
-    model.train()
-    optimizer.zero_grad()
-    input_ids = batch["input_ids"].to(device)
-    attention_mask = batch["attention_mask"].to(device)
-    labels = batch["labels"].to(device)
-    train_outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels, output_attentions=True,
-                          output_hidden_states=True)
-    attentions = train_outputs.attentions
-    batch_loss = train_outputs.loss
-    batch_loss.backward()
-    optimizer.step()
-    return batch_loss.item(), attentions, train_outputs.hidden_states, train_outputs.logits
-
-
-def test(model, test_loader, device):
-    """
-    Test the server model after aggregation.
-    Args:
-        model: The server model to be tested
-        test_loader: The testing data loader
-
-    Returns:
-        The average testing loss
-    """
-    model.eval()
-    test_loop = tqdm(test_loader, leave=False)
-    epoch_test_loss = 0
-    with torch.no_grad():
-        for batch in test_loop:
-            input_ids = batch["input_ids"].to(device)
-            attention_mask = batch["attention_mask"].to(device)
-            labels = batch["labels"].to(device)
-            test_outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            test_loss = test_outputs.loss
-            epoch_test_loss += test_loss.item()
-            test_loop.set_description(f"Test loss: {test_loss.item()}")
-        average_epoch_loss = epoch_test_loss / len(test_loop)
-        print(f"Epoch Average test loss: {average_epoch_loss}")
-    return average_epoch_loss
-
-
-def test_batch(model, batch, device):
-    """
-    Test the model with batch data.
-    Args:
-        model: The model to be tested
-        batch: The batch data
-        device: The device to run the model on
-
-    Returns:
-        The batch testing loss and the attention scores
-    """
-    model.eval()
-    input_ids = batch["input_ids"].to(device)
-    attention_mask = batch["attention_mask"].to(device)
-    labels = batch["labels"].to(device)
-    test_outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels,
-                         output_attentions=True)
-    test_loss = test_outputs.loss
-    return test_loss.item(), test_outputs.attentions
-
-
-def aggregate_parameters(server, client_parameters):
-    aggregated_parameters = []
-    for param in get_parameters(server):
-        aggregated_parameters.append(torch.zeros(param.shape))
-
-    for j in range(len(client_parameters)):
-        single_client_parameter = client_parameters[j]
-        for k, param in enumerate(single_client_parameter):
-            aggregated_parameters[k] += torch.Tensor(param)
-
-    for j in range(len(aggregated_parameters)):
-        aggregated_parameters[j] /= len(client_parameters)
-    return aggregated_parameters
-
-
-def cosine_similarity(vector_a, vector_b):
-    """
-    Calculate the cosine similarity between two vectors.
-    Args:
-        vector_a: A vector.
-        vector_b: Another vector.
-
-    Returns:
-        The cosine similarity between the two vectors.
-    """
-    return np.dot(vector_a, vector_b) / (np.linalg.norm(vector_a) * np.linalg.norm(vector_b))
-
-
 def generate2(model, tokenizer, device, seq_len, batch_size, num_samples, prompt, top_k=50, temperature=0.8):
     samples = []
     num_batches = int(np.ceil(num_samples / batch_size))
@@ -358,7 +170,8 @@ def write_top_scores_dict(generated_encodings, email_encodings, scores, store_pa
         if count < top_n and scores_flatten[index] > 0:
 
             j, k = np.unravel_index(index, scores.shape)
-            _, common_list = get_intersection(get_k_token_set(generated_encodings[j]), get_k_token_set(email_encodings[k]))
+            _, common_list = get_intersection(get_k_token_set(generated_encodings[j]),
+                                              get_k_token_set(email_encodings[k]))
             existed_match = common_k_set.get(j, [])
 
             common_tri = intersection(common_list, existed_match)
@@ -369,11 +182,9 @@ def write_top_scores_dict(generated_encodings, email_encodings, scores, store_pa
                 key = (j, k)
                 top_scores[key] = scores[j][k]
 
-
     with open(store_path, 'wb') as fp:
         pickle.dump(top_scores, fp)
         print('dictionary saved successfully to file')
-
 
 
 def intersection(lst1, lst2):

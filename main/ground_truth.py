@@ -22,7 +22,7 @@ print("finish encoding")
 start, end = clients
 print("start score")
 scores = calculate_scores(generated_encodings, email_encodings,tokenizer)
-top_score_dict_path = f"{SCORE_DICTIONARIES_PATH}/clients_{start}_{end}_{ppl_ranking_method}.pkl"
+top_score_dict_path = f"{SCORE_DICTIONARIES_PATH}clients_{start}_{end}_{ppl_ranking_method}.pkl"
 write_top_scores_dict(generated_encodings,email_encodings,scores, top_score_dict_path, 1000)
-score_statistics_path= f"{SCORE_STATISTICS_PATH}/clients_{start}_{end}_{ppl_ranking_method}.pkl"
+score_statistics_path= f"{SCORE_STATISTICS_PATH}clients_{start}_{end}_{ppl_ranking_method}.pkl"
 score_statistics(scores,score_statistics_path)
