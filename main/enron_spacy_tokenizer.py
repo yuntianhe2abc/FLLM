@@ -14,7 +14,7 @@ from tqdm import tqdm
 import math
 import zlib
 zlib_sentences=[]
-file = open("/data/perplexity_ranking/PPL-XL_Zlib.txt", 'r')
+file = open("/data/random_top_k/PPL-XL_Zlib.txt", 'r')
 result1=file.readlines()
 for i in range(1000):
   zlib_sentences.append(result1[i*3+2])

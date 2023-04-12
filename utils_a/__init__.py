@@ -7,13 +7,20 @@ import numpy as np
 import pickle
 import re
 
-PERPLEXITY_RANKING_PATH = "../data/perplexity_ranking/"
+PERPLEXITY_RANKING_PATH = "../data/random_top_k/"
 TRAIN_DATA_FILE = "../data/train_sentences/all_sentences.txt"
 TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.pkl"
 SCORE_DICTIONARIES_PATH = "../result/score_dictionaries/"
 SCORE_STATISTICS_PATH = "../result/score_statistics/"
-ranking_method = "PPL-XL_Zlib"
+SIMILAR_SENTENCES_PATH = "../result/similar_sentences/"
+ZLIB = "PPL-XL_Zlib"
+NORMAL_GPT = "PPL-XL_PPL-S"
+PURE_PPL = "PPL"
+LOWER_CASE = "PPL-XL_PPL-XL-Lower"
 
+RANDOM_TOP_K="random_top_k"
+SAMPLE_TRAIN_SET="sample_train_set"
+TEMPERATURE="temperature"
 
 def generate2(model, tokenizer, device, seq_len, batch_size, num_samples, prompt, top_k=50, temperature=0.8):
     samples = []
@@ -133,7 +140,7 @@ def get_intersection(k_set1, k_set2):
 #             scores[i][j] = score
 #     return scores
 
-def retrieve_top_similar_sentences(generated_sentence,train_data_encodings, tokenizer, num_of_return=5, k=3):
+def retrieve_top_similar_sentences(generated_sentence, train_data_encodings, tokenizer, num_of_return=5, k=3):
     """
     Given a sentence, find most k-tokens matched sentences from training set
     Args:
@@ -141,15 +148,17 @@ def retrieve_top_similar_sentences(generated_sentence,train_data_encodings, toke
         scores np array
     """
     common_lists = []
-    train_data=load_train_data()
+    train_data = load_train_data()
     scores = []
+    result = []
+    result.append(generated_sentence)
     number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)
     abc = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
-                                            truncation=True, max_length=128)
-    generated_sentence_encoding=abc["input_ids"][0].tolist()
+                    truncation=True, max_length=128)
+    generated_sentence_encoding = abc["input_ids"][0].tolist()
     print(generated_sentence_encoding)
     n = len(train_data_encodings)
-    print("nnnnn",n)
+    print("nnnnn", n)
     k_set1 = get_k_token_set(generated_sentence_encoding, k)
     for i in range(n):
         k_set2 = get_k_token_set(train_data_encodings[i], k)
@@ -162,9 +171,10 @@ def retrieve_top_similar_sentences(generated_sentence,train_data_encodings, toke
     print(scores)
     top_indices = sorted_indices[:num_of_return]
     for i in top_indices:
-        print((scores[i], train_data[i]))
-        print(common_lists[i])
-    return scores
+        result.append((scores[i], train_data[i], common_lists[i]))
+        # print((scores[i], train_data[i]))
+        # print(common_lists[i])
+    return result
 
 
 def write_pickle(object, file_name):
