@@ -5,8 +5,10 @@ from utils_a import *
 
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
                                               pad_token="<|pad|>")
-ppl_ranking_method = "PPL-XL_Zlib"
-file_path = f"{PERPLEXITY_RANKING_PATH}{ppl_ranking_method}.txt"
+
+ranking_method = ZLIB
+generation_method = RANDOM_TOP_K
+file_path = f"{GENERATION_PATH}/{generation_method}/{ranking_method}.txt"
 # clients = (1, 1)
 
 generated_data = read_perplexity_ranking(file_path)
@@ -24,8 +26,7 @@ for x in generated_data:
     result = retrieve_top_similar_sentences(x, train_data_encodings, tokenizer)
     results.append(result)
 # write results to file
-ranking_method = ZLIB
-generation_method = RANDOM_TOP_K
+
 file_path = f"{SIMILAR_SENTENCES_PATH}/RANDOM_TOP_K/{ranking_method}.txt"
 file = open(file_path, 'w')
 

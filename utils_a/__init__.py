@@ -7,11 +7,9 @@ import numpy as np
 import pickle
 import re
 
-PERPLEXITY_RANKING_PATH = "../data/random_top_k/"
+GENERATION_PATH = "../data/"
 TRAIN_DATA_FILE = "../data/train_sentences/all_sentences.txt"
 TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.pkl"
-SCORE_DICTIONARIES_PATH = "../result/score_dictionaries/"
-SCORE_STATISTICS_PATH = "../result/score_statistics/"
 SIMILAR_SENTENCES_PATH = "../result/similar_sentences/"
 ZLIB = "PPL-XL_Zlib"
 NORMAL_GPT = "PPL-XL_PPL-S"
