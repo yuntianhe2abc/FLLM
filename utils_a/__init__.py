@@ -150,15 +150,14 @@ def retrieve_top_similar_sentences(generated_sentence, train_data_encodings, tok
     common_lists = []
     train_data = load_train_data()
     scores = []
+    matched_sentences=[]
     result = []
     result.append(generated_sentence)
     number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)
     abc = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
                     truncation=True, max_length=128)
     generated_sentence_encoding = abc["input_ids"][0].tolist()
-    print(generated_sentence_encoding)
     n = len(train_data_encodings)
-    print("nnnnn", n)
     k_set1 = get_k_token_set(generated_sentence_encoding, k)
     for i in range(n):
         k_set2 = get_k_token_set(train_data_encodings[i], k)
@@ -166,12 +165,12 @@ def retrieve_top_similar_sentences(generated_sentence, train_data_encodings, tok
         if score > 0:
             scores.append(score)
             common_lists.append(tokenizer.batch_decode(common_list, skip_special_tokens=True))
-
+            matched_sentences.append(train_data[i])
     sorted_indices = sorted(range(len(scores)), key=lambda k: scores[k], reverse=True)
-    print(scores)
+
     top_indices = sorted_indices[:num_of_return]
     for i in top_indices:
-        result.append((scores[i], train_data[i], common_lists[i]))
+        result.append((scores[i], matched_sentences[i], common_lists[i]))
         # print((scores[i], train_data[i]))
         # print(common_lists[i])
     return result

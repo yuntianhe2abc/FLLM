@@ -16,7 +16,11 @@ generated_data = read_perplexity_ranking(file_path)
 # write_pickle(train_data_encoding,TRAIN_DATA_ENCODINGS_FILE)
 train_data_encodings = read_pickle(TRAIN_DATA_ENCODINGS_FILE)
 results = []
+count=0
 for x in generated_data:
+    count+=1
+    if count%10==0:
+        print(count)
     result = retrieve_top_similar_sentences(x, train_data_encodings, tokenizer)
     results.append(result)
 # write results to file
@@ -25,18 +29,18 @@ generation_method = RANDOM_TOP_K
 file_path = f"{SIMILAR_SENTENCES_PATH}/RANDOM_TOP_K/{ranking_method}.txt"
 file = open(file_path, 'w')
 
-for count, values in enumerate(results):
-    sample = values[0]
-    top_5 = values[1]
-    file.write(f"{count}\n")
-    file.write(f"Sample: {sample}\n")
+for count, result in enumerate(results):
+    sample = result[0]
+    print("shoudl be 6:", len(result))
 
-    for count_1, top_sentence in enumerate(top_5):
-        score, train_sentence, common_tokens = result[1]
-        file.write(f"{count_1}. score:{score}  common tokens:  {common_tokens}\n")
-        file.write(f"{train_sentence}\n")
-        file.write("\n")
+    file.write(f"Sample [ {count} ]: {sample}\n")
+    file.write(f"\tTop 5 similar sentences in training set: \n")
+    for i in range(1,6):
+        score, train_sentence, common_tokens=result[i]
+        file.write(f"\t--{i}-- {train_sentence}")
+        file.write(f"\tscore:{score}  common tokens:  {common_tokens}\n")
 
+    file.write("\n")
 file.close()
 # generated_encodings = encode(tokenizer, generated_data)
 # email_encodings = encode(tokenizer, train_data)
