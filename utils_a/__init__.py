@@ -9,7 +9,7 @@ import re
 
 PERPLEXITY_RANKING_PATH = "../data/perplexity_ranking/"
 TRAIN_DATA_FILE = "../data/train_sentences/all_sentences.txt"
-TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.txt"
+TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.pkl"
 SCORE_DICTIONARIES_PATH = "../result/score_dictionaries/"
 SCORE_STATISTICS_PATH = "../result/score_statistics/"
 ranking_method = "PPL-XL_Zlib"
@@ -133,7 +133,7 @@ def get_intersection(k_set1, k_set2):
 #             scores[i][j] = score
 #     return scores
 
-def retrieve_top_similar_sentences(generated_sentence, train_data, tokenizer, num_of_return=5, k=3):
+def retrieve_top_similar_sentences(generated_sentence,train_data_encodings, tokenizer, num_of_return=5, k=3):
     """
     Given a sentence, find most k-tokens matched sentences from training set
     Args:
@@ -141,23 +141,25 @@ def retrieve_top_similar_sentences(generated_sentence, train_data, tokenizer, nu
         scores np array
     """
     common_lists = []
+    train_data=load_train_data()
     scores = []
     number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)
-    generated_sentence_encoding = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
+    abc = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
                                             truncation=True, max_length=128)
-    train_data_encoding = encode(tokenizer, train_data)
-    n = len(train_data)
-
+    generated_sentence_encoding=abc["input_ids"][0].tolist()
+    print(generated_sentence_encoding)
+    n = len(train_data_encodings)
+    print("nnnnn",n)
     k_set1 = get_k_token_set(generated_sentence_encoding, k)
     for i in range(n):
-        k_set2 = get_k_token_set(train_data_encoding[i], k)
+        k_set2 = get_k_token_set(train_data_encodings[i], k)
         score, common_list = get_intersection(k_set1, k_set2)
         if score > 0:
             scores.append(score)
             common_lists.append(tokenizer.batch_decode(common_list, skip_special_tokens=True))
 
     sorted_indices = sorted(range(len(scores)), key=lambda k: scores[k], reverse=True)
-
+    print(scores)
     top_indices = sorted_indices[:num_of_return]
     for i in top_indices:
         print((scores[i], train_data[i]))
