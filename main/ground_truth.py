@@ -10,9 +10,15 @@ ppl_ranking_method = "PPL-XL_Zlib"
 file_path = f"{PERPLEXITY_RANKING_PATH}{ppl_ranking_method}.txt"
 # clients = (1, 1)
 train_data = load_train_data()
-generated_data = read_perplexity_ranking(file_path)
-retrieve_top_similar_sentences(generated_data[7],train_data,tokenizer)
-
+# generated_data = read_perplexity_ranking(file_path)
+# retrieve_top_similar_sentences(generated_data[7],train_data,tokenizer)
+print("encoding start")
+train_data_encoding= encode(tokenizer, train_data)
+print("encoding end")
+write_pickle(train_data_encoding,TRAIN_DATA_ENCODINGS_FILE)
+ABC=read_pickle(TRAIN_DATA_ENCODINGS_FILE)
+print(len(ABC))
+print(ABC[:10])
 # generated_encodings = encode(tokenizer, generated_data)
 # email_encodings = encode(tokenizer, train_data)
 

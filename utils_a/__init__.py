@@ -6,11 +6,14 @@ import pandas as pd
 import numpy as np
 import pickle
 import re
+
 PERPLEXITY_RANKING_PATH = "../data/perplexity_ranking/"
 TRAIN_DATA_FILE = "../data/train_sentences/all_sentences.txt"
+TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.txt"
 SCORE_DICTIONARIES_PATH = "../result/score_dictionaries/"
-SCORE_STATISTICS_PATH="../result/score_statistics/"
-ranking_method="PPL-XL_Zlib"
+SCORE_STATISTICS_PATH = "../result/score_statistics/"
+ranking_method = "PPL-XL_Zlib"
+
 
 def generate2(model, tokenizer, device, seq_len, batch_size, num_samples, prompt, top_k=50, temperature=0.8):
     samples = []
@@ -53,6 +56,7 @@ def get_k_token_set(sentence_encoding, k=3):
         k_tokens_list.append(k_tokens)
     return k_tokens_list
 
+
 #
 # def load_clients_train_data(clients, folder_path):
 #     clients_data = []
@@ -66,15 +70,16 @@ def get_k_token_set(sentence_encoding, k=3):
 #     return clients_data
 
 def number_sentence_preprocessor(Str):
-  new_Str=Str
-  numbers = re.findall(r'\d+', Str)
-  if len(numbers)>0:
-    for number in numbers:
-      if len(number) >= 4:
-        number_digits_with_space = ' '.join(number)
-        number_digits_with_space=' '+number_digits_with_space+' '
-        new_Str=new_Str.replace(number,number_digits_with_space)
-  return new_Str
+    new_Str = Str
+    numbers = re.findall(r'\d+', Str)
+    if len(numbers) > 0:
+        for number in numbers:
+            if len(number) >= 4:
+                number_digits_with_space = ' '.join(number)
+                number_digits_with_space = ' ' + number_digits_with_space + ' '
+                new_Str = new_Str.replace(number, number_digits_with_space)
+    return new_Str
+
 
 def read_perplexity_ranking(file_path):
     sentences = []
@@ -128,35 +133,49 @@ def get_intersection(k_set1, k_set2):
 #             scores[i][j] = score
 #     return scores
 
-def retrieve_top_similar_sentences(generated_sentence, train_data, tokenizer,  num_of_return=5,k=3):
+def retrieve_top_similar_sentences(generated_sentence, train_data, tokenizer, num_of_return=5, k=3):
     """
     Given a sentence, find most k-tokens matched sentences from training set
     Args:
     Returns:
         scores np array
     """
-    common_lists=[]
-    scores=[]
-    number_split_generated_sentence=number_sentence_preprocessor(generated_sentence)
-    generated_sentence_encoding = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False, truncation=True, max_length=128)
-    train_data_encoding= encode(tokenizer, train_data)
+    common_lists = []
+    scores = []
+    number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)
+    generated_sentence_encoding = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
+                                            truncation=True, max_length=128)
+    train_data_encoding = encode(tokenizer, train_data)
     n = len(train_data)
 
-    k_set1 = get_k_token_set(generated_sentence_encoding,k)
+    k_set1 = get_k_token_set(generated_sentence_encoding, k)
     for i in range(n):
-        k_set2 = get_k_token_set(train_data_encoding[i],k)
+        k_set2 = get_k_token_set(train_data_encoding[i], k)
         score, common_list = get_intersection(k_set1, k_set2)
-        if score>0:
+        if score > 0:
             scores.append(score)
             common_lists.append(tokenizer.batch_decode(common_list, skip_special_tokens=True))
 
-    sorted_indices = sorted(range(len(scores)), key=lambda k: scores[k],reverse=True)
+    sorted_indices = sorted(range(len(scores)), key=lambda k: scores[k], reverse=True)
 
-    top_indices=sorted_indices[:num_of_return]
+    top_indices = sorted_indices[:num_of_return]
     for i in top_indices:
-        print((scores[i],train_data[i]))
+        print((scores[i], train_data[i]))
         print(common_lists[i])
     return scores
+
+
+def write_pickle(object, file_name):
+    with open(file_name, 'wb') as fp:
+        pickle.dump(object, fp)
+        print('Done writing list')
+
+
+def read_pickle(file_name):
+    with open(file_name, 'rb') as fp:
+        n_list = pickle.load(fp)
+        return n_list
+
 
 def write_ground_truth(scores, generated_data, email_data, path, top_n=1000):
     scores_flatten = np.ravel(scores)
