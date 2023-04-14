@@ -16,9 +16,10 @@ NORMAL_GPT = "PPL-XL_PPL-S"
 PURE_PPL = "PPL"
 LOWER_CASE = "PPL-XL_PPL-XL-Lower"
 
-RANDOM_TOP_K="random_top_k"
-SAMPLE_TRAIN_SET="sample_train_set"
-TEMPERATURE="temperature"
+RANDOM_TOP_K = "random_top_k"
+SAMPLE_TRAIN_SET = "sample_train_set"
+TEMPERATURE = "temperature"
+
 
 def generate2(model, tokenizer, device, seq_len, batch_size, num_samples, prompt, top_k=50, temperature=0.8):
     samples = []
@@ -73,6 +74,7 @@ def get_k_token_set(sentence_encoding, k=3):
 #         a = file.readlines()
 #         clients_data.extend(a)
 #     return clients_data
+
 
 def number_sentence_preprocessor(Str):
     new_Str = Str
@@ -148,7 +150,7 @@ def retrieve_top_similar_sentences(generated_sentence, train_data_encodings, tok
     common_lists = []
     train_data = load_train_data()
     scores = []
-    matched_sentences=[]
+    matched_sentences = []
     result = []
     result.append(generated_sentence)
     number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)

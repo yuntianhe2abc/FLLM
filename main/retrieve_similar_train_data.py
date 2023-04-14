@@ -6,7 +6,7 @@ from utils_a import *
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
                                               pad_token="<|pad|>")
 
-ranking_method = ZLIB
+ranking_method = LOWER_CASE
 generation_method = RANDOM_TOP_K
 file_path = f"{GENERATION_PATH}/{generation_method}/{ranking_method}.txt"
 # clients = (1, 1)
@@ -43,6 +43,7 @@ for count, result in enumerate(results):
 
     file.write("\n")
 file.close()
+
 # generated_encodings = encode(tokenizer, generated_data)
 # email_encodings = encode(tokenizer, train_data)
 
