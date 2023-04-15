@@ -20,12 +20,12 @@ from tqdm import tqdm
 import math
 import zlib
 
-device = torch.device("cpu")
+device = torch.device("mps")
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
                                               pad_token="<|pad|>")
 model1 = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
 model1.resize_token_embeddings(len(tokenizer))
-MODEL_PATH = "/content/drive/MyDrive/shared_folder/server_2512.pt"
+MODEL_PATH = "../model/server_2512.pt"
 model1.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model2 = GPT2LMHeadModel.from_pretrained('gpt2-medium').to(device)
 # model2.resize_token_embeddings(len(tokenizer))
@@ -38,7 +38,7 @@ model2.eval()
 def write_topN(metric, samples, name1, scores1, name2=None, scores2=None, n=1000):
     idxs = np.argsort(metric)[::-1][:n]
     print(scores1.shape)
-    file = open(f"/content/drive/MyDrive/FLLM/data/{sampling_method}/{name1}_{name2}.txt", 'w', encoding="utf-8")
+    file = open(f"../data/{sampling_method}/{name1}_{name2}.txt", 'w', encoding="utf-8")
 
     # file=open(f"{name1}_{name2}_test.txt",'w',encoding="utf-8")
     for i, idx in enumerate(idxs):
@@ -66,7 +66,7 @@ def calculatePerplexity(sentence, model, tokenizer):
 
 
 sampling_method = SAMPLE_TRAIN_SET
-generation_file = f"/content/drive/MyDrive/FLLM/data/{sampling_method}/200000_generation.txt"
+generation_file = f"../data/{sampling_method}/200000_generation.txt"
 scores = {"S": [], "M": [], "Lower": [], "Zlib": []}
 file = open(generation_file, 'r', encoding="utf-8")
 samples = file.readlines()
