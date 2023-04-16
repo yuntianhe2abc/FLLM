@@ -1,19 +1,11 @@
-from transformers import GPT2TokenizerFast
-from utils_a import *
-ranking_method = PPL
-generation_method = SAMPLE_TRAIN_SET
-top_1000_read_file = f"{GENERATION_PATH}/{generation_method}/{ranking_method}.txt"
-top_100_similar_write_file = f"{SIMILAR_SENTENCES_PATH}/{generation_method}/{ranking_method}.txt"
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
-                                              pad_token="<|pad|>")
-top_1000 = read_perplexity_ranking(top_1000_read_file)
-train_data_encodings = read_pickle(TRAIN_DATA_ENCODINGS_FILE)
-
+#PPL-S_None
 ppl_top100=[]
 ppl_top100.append(125)
+ppl_top100.append(187)
 ppl_top100.append(191)
 ppl_top100.append(197)
 ppl_top100.append(198)
+ppl_top100.append(235)
 ppl_top100.append(238)
 ppl_top100.append(249)
 ppl_top100.append(262)
@@ -35,7 +27,6 @@ ppl_top100.append(405)
 ppl_top100.append(410)
 ppl_top100.append(413)
 ppl_top100.append(419)
-ppl_top100.append(421)
 ppl_top100.append(425)
 ppl_top100.append(437)
 ppl_top100.append(440)
@@ -113,11 +104,6 @@ ppl_top100.append(950)
 ppl_top100.append(957)
 ppl_top100.append(966)
 ppl_top100.append(986)
-ppl_top100_sentences=[]
-for index in ppl_top100:
-    #index-1, top_1000 start index is 1
-    ppl_top100_sentences.append(top_1000[index-1])
-# print(ppl_top100_sentences[:5])
-top_100_ground_truth(ppl_top100_sentences,train_data_encodings,tokenizer,top_100_similar_write_file)
 
 
+#PPL-S_N

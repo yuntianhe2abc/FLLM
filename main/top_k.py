@@ -20,7 +20,7 @@ from tqdm import tqdm
 import math
 import zlib
 
-device = torch.device("mps")
+device = torch.device("cpu")
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
                                               pad_token="<|pad|>")
 model1 = GPT2LMHeadModel.from_pretrained('gpt2').to(device)

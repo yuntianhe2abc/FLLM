@@ -12,9 +12,9 @@ TRAIN_DATA_FILE = "../data/train_sentences/all_sentences.txt"
 TRAIN_DATA_ENCODINGS_FILE = "../data/train_sentences/all_sentences_encodings.pkl"
 SIMILAR_SENTENCES_PATH = "../result/similar_sentences/"
 ZLIB = "PPL-XL_Zlib"
-NORMAL_GPT = "PPL-XL_PPL-S"
-PURE_PPL = "PPL"
-LOWER_CASE = "PPL-XL_PPL-XL-Lower"
+NORMAL_GPT = "PPL-S_PPL-M"
+PPL = "PPL-S_None"
+LOWER_CASE = "PPL-S_Lower"
 
 RANDOM_TOP_K = "random_top_k"
 SAMPLE_TRAIN_SET = "sample_train_set"
@@ -92,8 +92,13 @@ def read_perplexity_ranking(file_path):
     sentences = []
     file = open(file_path, 'r')
     result1 = file.readlines()
-    for i in range(1000):
-        sentences.append(result1[i * 3 + 2])
+
+    if len(result1) == 3000:
+        for i in range(1000):
+            sentences.append(result1[i * 3 + 1])
+    else:
+        print(f"There is some problem with the top_1000 file, there are {len(result1)} lines in it!")
+    print(f"There are 1000 top sentences: {len(sentences)==1000}!")
     return sentences
 
 
@@ -153,6 +158,7 @@ def retrieve_top_similar_sentences(generated_sentence, train_data_encodings, tok
     matched_sentences = []
     result = []
     result.append(generated_sentence)
+    print("generated sentence:",generated_sentence)
     number_split_generated_sentence = number_sentence_preprocessor(generated_sentence)
     abc = tokenizer(number_split_generated_sentence, return_tensors="pt", padding=False,
                     truncation=True, max_length=128)
@@ -187,20 +193,32 @@ def read_pickle(file_name):
         n_list = pickle.load(fp)
         return n_list
 
+def write_ground_truth(results,file_path):
+    file = open(file_path, 'w',encoding="utf-8")
+    for count, result in enumerate(results):
+        sample = result[0]
+        print("shoudl be 6:", len(result))
 
-def write_ground_truth(scores, generated_data, email_data, path, top_n=1000):
-    scores_flatten = np.ravel(scores)
-    sorted_indices = np.argsort(scores_flatten)
-    reverse_sorted_indices = sorted_indices[::-1]
-    largest_indices = reverse_sorted_indices[:top_n]
-    with open(path, 'w') as f:
-        for index in largest_indices:
-            j, k = np.unravel_index(index, scores.shape)
-            f.write(f"{scores[j][k]}\n")
-            f.write(f"{generated_data[j]}\n")
-            f.write(f"{email_data[j]}\n")
-            f.write("\n")
-    f.close()
+        file.write(f"Sample [ {count} ]: {sample}\n")
+        file.write(f"\tTop 5 similar sentences in training set: \n")
+        for i in range(1, 6):
+            score, train_sentence, common_tokens = result[i]
+            file.write(f"\t--{i}-- {train_sentence}")
+            file.write(f"\tscore:{score}  common tokens:  {common_tokens}\n")
+
+        file.write("\n")
+    file.close()
+def top_100_ground_truth(top_100,train_data_encodings,tokenizer,top_100_similar_write_file):
+    results = []
+    count=0
+    for x in top_100:
+        print(count)
+        count += 1
+        # if count % 10 == 0:
+        #     print(count)
+        result = retrieve_top_similar_sentences(x, train_data_encodings, tokenizer)
+        results.append(result)
+    write_ground_truth(results,top_100_similar_write_file)
 
 
 def load_train_data():
