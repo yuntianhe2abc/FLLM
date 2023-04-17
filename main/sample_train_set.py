@@ -18,7 +18,7 @@ import numpy as np
 from tqdm import tqdm
 import zlib
 
-device = torch.device("cpu")
+device = torch.device("mps")
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", bos_token="<|startoftext|>", eos_token="<|endoftext|>",
                                               pad_token="<|pad|>")
 model1 = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
@@ -109,34 +109,34 @@ with tqdm(total=len(samples)) as pbar:
             p1 = calculatePerplexity(text, model1, tokenizer)
             p2 = calculatePerplexity(text, model2, tokenizer)
             # perplexity on lower-case sample
-            p_lower = calculatePerplexity(text.lower(), model1, tokenizer)
-            # Zlib "entropy" of sample
-            zlib_entropy = len(zlib.compress(bytes(text, 'utf-8')))
+            # p_lower = calculatePerplexity(text.lower(), model1, tokenizer)
+            # # Zlib "entropy" of sample
+            # zlib_entropy = len(zlib.compress(bytes(text, 'utf-8')))
             # p_window = calculateWindowPerplexity(text, model1, tokenizer)
 
             scores["S"].append(p2)
             scores["M"].append(p1)
-            scores["Lower"].append(p_lower)
-            scores["Zlib"].append(zlib_entropy)
+            # scores["Lower"].append(p_lower)
+            # scores["Zlib"].append(zlib_entropy)
             # scores["Window"].append(p_window)
         pbar.update(batch_size)
 scores["S"] = np.asarray(scores["S"])
 scores["M"] = np.asarray(scores["M"])
-scores["Lower"] = np.asarray(scores["Lower"])
-scores["Zlib"] = np.asarray(scores["Zlib"])
+# scores["Lower"] = np.asarray(scores["Lower"])
+# scores["Zlib"] = np.asarray(scores["Zlib"])
 # scores["Window"] = np.asarray(scores["Window"])
 #Sort by perplexity
-metric = -np.log(scores["S"])
-write_topN(metric, samples, "PPL-S", scores["S"])
+# metric = -np.log(scores["S"])
+# write_topN(metric, samples, "PPL-S", scores["S"])
 
-metric = np.log(scores["S"]) / np.log(scores["M"])
-write_topN(metric, samples, "PPL-S", scores["S"], "PPL-M", scores["M"])
+metric = np.log(scores["M"]) / np.log(scores["S"])
+write_topN(metric, samples, "PPL-M", scores["M"], "PPL-S", scores["S"])
 
-metric = np.log(scores["Lower"]) / np.log(scores["S"])
-write_topN(metric, samples, "PPL-S", scores["S"], "PPL-S-Lower", scores["Lower"])
-
-metric = scores["Zlib"] / np.log(scores["S"])
-write_topN(metric, samples, "PPL-S", scores["S"], "Zlib", scores["Zlib"])
+# metric = np.log(scores["Lower"]) / np.log(scores["S"])
+# write_topN(metric, samples, "PPL-S", scores["S"], "PPL-S-Lower", scores["Lower"])
+#
+# metric = scores["Zlib"] / np.log(scores["S"])
+# write_topN(metric, samples, "PPL-S", scores["S"], "Zlib", scores["Zlib"])
 
 # metric = -np.log(scores["Window"])
 # write_topN(metric, samples, "PPL-Window", scores["Window"])
